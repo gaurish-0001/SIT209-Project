@@ -1,13 +1,24 @@
 const mongoose = require("mongoose");
 
-module.exports = mongoose.model(
-  "SmartLectureHall",
-  new mongoose.Schema(
-    {
-      username: String,
-      password: String,
-      role: String,
-    },
-    { collection: "SLHMS" }
-  )
-);
+const userSchema = new mongoose.Schema({
+  id:{
+    type : String,
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    required: true,
+      },
+});
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = User;

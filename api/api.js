@@ -3,7 +3,7 @@ const User = require("./model/user/user");
 const app = express();
 const mongoose = require("mongoose");
 mongoose.connect(
-  "mongodb+srv://armaan:armaan@cluster0.paruxml.mongodb.net/SLHMS",
+  "mongodb+srv://armaan:armaan@cluster0.paruxml.mongodb.net/SmartLectureHall",
   { useNewUrlParser: true, useUnifiedTopology: true }
 );
 
@@ -11,92 +11,113 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const crypto = require("crypto");
 const fs = require("fs");
-// const cors = require('cors');
 
-// // Use CORS middleware
-// app.use(cors());
+
+
+const cors = require('cors');
+
+app.use(cors());
+
+// Allow DELETE method
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Methods', 'DELETE');
+  next();
+});
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const port = 5003;
+const port = 5004;
+// CRUD endpoints for User model
+// Create a new user
 
-// Set up session middleware
-app.use(
-  session({
-    secret: "supersecretkey",
-    resave: false,
-    saveUninitialized: true,
-  })
+app.get("/test", (req, res) => 
+{
+  res.send("Hello World!");
+}
 );
 
-app.get("/api/user", (req, res) => {
-  SLHMS.find().then(function (err, devices) {
-    if (err == true) {
-      return res.send(err);
-    } else {
-      return res.send(user);
-    }
-  });
-});
-
-// Handle login form submission
-app.post("/login", async (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  // Hash the password
-  const hashedPassword = crypto
-    .createHash("sha256")
-    .update(password)
-    .digest("hex");
-
+app.post("/users", async (req, res) => {
   try {
-    // Look for the user in the database
-    const user = await SLHMS.findOne({
-      username: username,
-      password: hashedPassword,
-    });
-
-    if (user) {
-      // Set session variables
-      req.session.username = username;
-      req.session.role = user.role;
-
-      // Return success response
-      res.status(200).json({ message: "Login successful" });
-    } else {
-      // If the email and password don't match, return error response
-      res.status(401).json({ error: "Invalid email or password" });
-    }
+    const newUser = new User(req.body);
+    await newUser.save();
+    res.status(201).send(newUser);
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(400).send(err);
   }
 });
 
-// Handle logout
-app.post("/logout", (req, res) => {
-  // Clear session variables and return success response
-  req.session.destroy(() => {
-    res.status(200).json({ message: "Logout successful" });
-  });
+// Read all users (GET)
+app.get("/users", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.status(200).send(users);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
-//to register a new user
-app.post("/api/user", (req, res) => {
-  const { username, password, userType } = req.body;
-  const newUser = new User({
-    username,
-    password,
-    role,
-  });
-  newUser.save((err) => {
-    return err
-      ? res.status(500).send(err)
-      : res.status(201).send("successfully added user and user data");
-  });
+// Read a user by ID
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).send();
+    } else {
+      res.status(200).send(user);
+    }
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
+// Update a user by ID
+app.patch("/users/:id", async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ["username", "password", "role"];
+  const isValidUpdate = updates.every((update) =>
+    allowedUpdates.includes(update)
+  );
+
+  if (!isValidUpdate) {
+    return res.status(400).send({ error: "Invalid updates" });
+  }
+
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).send();
+    } else {
+      updates.forEach((update) => (user[update] = req.body[update]));
+      await user.save();
+      res.status(200).send(user);
+    }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+// Delete a user by ID
+app.delete("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      res.status(404).send();
+    } else {
+      res.status(200).send(user);
+    }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+// Start the server
 app.listen(port, () => {
-  console.log(`listening on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
