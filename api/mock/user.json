@@ -15,14 +15,3 @@
     "role": "coordinator"
   }
 ]
-
-[{
-  "ANNOUNCEMENT_ID": 1,
-  "ANNOUNCEMENT_TITLE": "Announcement 1",
-  "ANNOUNCEMENT_DESCRIPTION": "This is announcement is for testing purposes only",
-  "ANNOUNCEMENT_DATE": "2020-01-01",
-  "ANNOUNCEMENT_TIME": "12:00:00",
-  "ANNOUNCEMENT_BY": "Aryan",
-  "ANNOUNCEMENT_TO": "All"
-},
-}]

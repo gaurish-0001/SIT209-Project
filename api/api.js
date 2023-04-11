@@ -1,6 +1,7 @@
 const express = require("express");
 const User = require("./model/user/user");
 const app = express();
+const mqtt = require('mqtt');
 const mongoose = require("mongoose");
 mongoose.connect(
   "mongodb+srv://armaan:armaan@cluster0.paruxml.mongodb.net/SmartLectureHall",
@@ -17,6 +18,9 @@ const fs = require("fs");
 const cors = require('cors');
 
 app.use(cors());
+
+//[this is the mqtt broker]
+const client  = mqtt.connect('mqtt://broker.mqttdashboard.com');
 
 // Allow DELETE method
 app.use((req, res, next) => {
@@ -42,6 +46,48 @@ app.get("/test", (req, res) =>
   res.send("Hello World!");
 }
 );
+
+
+//connect to mqtt broker
+client.on('connect', function () {
+  console.log('Connected to MQTT broker');
+
+  // Subscribe to the "temp" topic
+  client.subscribe('temp_slhms', function (err) {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log('Subscribed to the "temp_slhms" topic');
+    }
+  });
+});
+
+// Handle incoming MQTT messages
+client.on('message', async function (topic, message) {
+  if (topic === 'temp_slhms') {
+    console.log(`Received message on topic "${topic}": ${message.toString()}`);
+    
+    // Parse the message payload
+    const data = JSON.parse(message.toString());
+
+    // Save temperature data to MongoDB using Mongoose
+    const Temperature = require('./model/sensor/sensor');
+    const newTemperature = new Temperature({
+      device_id: data.device_id,
+      temperature: data.temperature,
+      unit: data.unit,
+      timestamp: new Date(data.timestamp)
+    });
+
+    try {
+      await newTemperature.save();
+      console.log('Temperature data saved to MongoDB');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+});
+
 
 app.post("/users", async (req, res) => {
   try {
