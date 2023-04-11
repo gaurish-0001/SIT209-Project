@@ -1,0 +1,17 @@
+{
+  "name": "mqtt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mqtt.js",
+  "scripts": {
+    "start": "nodemon mqtt.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Saksham",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mqtt": "^4.3.7",
+    "nodemon": "^2.0.22"
+  }
+}
